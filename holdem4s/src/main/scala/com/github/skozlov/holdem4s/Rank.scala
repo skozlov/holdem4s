@@ -113,6 +113,20 @@ object Rank extends Enumeration {
 		lazy val clubs = Card(rank, Suit.Clubs)
 
 		/**
+		  * Returns list of ranks from this rank (inclusive) to the specified rank (inclusive), in ascending order.
+		  * @param upper max rank in list
+		  * @return list of ranks
+		  * @throws IllegalArgumentException if this rank is greater than `upper`
+		  * @example
+		  * import com.github.skozlov.holdem4s.Rank._
+		  * val fromJackToAce: List[Rank] = J to A // J, Q, K, A
+		  */
+		def to(upper: Rank): List[Rank] = {
+			require(upper >= rank, s"$upper is less than $rank")
+			(rank.id to upper.id).toList map Rank.apply
+		}
+
+		/**
 		  * Returns list of ranks from this rank (inclusive) to the specified rank (inclusive), in descending order.
 		  * @param lower min rank in list
 		  * @return list of ranks
