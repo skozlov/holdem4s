@@ -1,6 +1,5 @@
 package com.github.skozlov.holdem4s
 
-import com.github.skozlov.holdem4s.Rank.Rank
 import com.github.skozlov.holdem4s.Suit.Suit
 
 /**

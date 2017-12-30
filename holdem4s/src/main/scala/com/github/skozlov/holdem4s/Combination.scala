@@ -1,7 +1,7 @@
 package com.github.skozlov.holdem4s
 
 import com.github.skozlov.holdem4s.Combination._
-import com.github.skozlov.holdem4s.Rank.{Rank, _}
+import com.github.skozlov.holdem4s.Rank._
 
 import scala.annotation.tailrec
 
