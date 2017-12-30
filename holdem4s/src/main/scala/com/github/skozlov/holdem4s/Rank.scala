@@ -171,4 +171,15 @@ object Rank {
 	  * All ranks from A to 2
 	  */
 	val RanksInDescendingOrder: List[Rank] = RanksInAscendingOrder.reverse
+
+	/**
+	  * Converts an integer from `2` to `9` (both inclusive) to the corresponding rank.
+	  * @param number integer to convert to rank
+	  * @return `Two` if `number == 2`, `Three` if `number == 3`, etc.
+	  * @throws IllegalArgumentException if `number` is less than `2` or greater than `9`
+	  */
+	implicit def numberToRank(number: Int): Rank = {
+		require((2 to 9) contains number, s"Invalid rank: $number")
+		PriorityToRank(number)
+	}
 }

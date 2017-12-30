@@ -9,7 +9,7 @@ import com.github.skozlov.holdem4s._
 import Suit._
 import Rank._
 
-Hand(`2`♠, `2`♥, A♠, K♠, Q♠, J♥, `9`♥) match {
+Hand(2♠, 2♥, A♠, K♠, Q♠, J♥, 9♥) match {
 	case Pair(`2`, highestKicker :: _) =>
 		println(s"A pair of 2s with $highestKicker kicker and so on") //A pair of 2s with A kicker and so on
 }
@@ -45,7 +45,7 @@ println(List(♠, ♥, ♦, ♣) == List(Spades, Hearts, Diamonds, Clubs)) //tru
 There are intuitive constants for all 13 ranks:
 
 ```scala
-val ranks: List[Rank] = List(A, K, Q, J, T, `9`, `8`, `7`, `6`, `5`, `4`, `3`, `2`)
+val ranks: List[Rank] = List(A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2)
 println(ranks mkString " ") //A K Q J T 9 8 7 6 5 4 3 2
 ```
 
@@ -66,8 +66,8 @@ println(unorderedRanks.sorted mkString " ") //2 3 4 5 6 7 8 9 T J Q K A
 They also have aliases:
 
 ```scala
-println(List(A, K, Q, J, T, `9`, `8`, `7`, `6`, `5`, `4`, `3`, `2`)
-	== List(Ace, King, Queen, Jack, Ten, Nine, Eight, Seven, Six, Five, Four, Three, Two)) //true
+require(List[Rank](A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2)
+	== List(Ace, King, Queen, Jack, Ten, Nine, Eight, Seven, Six, Five, Four, Three, Two))
 ```
 
 ### Cards
@@ -120,7 +120,7 @@ val shortestHand: Hand = Hand(A♠)
 ... and the longest one consists of 7 cards:
 
 ```scala
-val longestHand = Hand(K♥, Q♥, J♥, T♥, `9`♥, A♣, A♠)
+val longestHand = Hand(K♥, Q♥, J♥, T♥, 9♥, A♣, A♠)
 ```
 
 Hands can be compared with each other:
@@ -175,8 +175,8 @@ println(!(
 Finally, pattern matching:
 
 ```scala
-Hand(`2`♠, `2`♥, A♠, K♠, Q♠, J♥, `9`♥) match {
+Hand(2♠, 2♥, A♠, K♠, Q♠, J♥, 9♥) match {
 	case Pair(`2`, highestKicker :: _) =>
-		println(s"A pair of 2s with $highestKicker kicker and so on") //A pair of 2s with A kicker and so on
+		require(s"A pair of 2s with $highestKicker kicker and so on" == "A pair of 2s with A kicker and so on")
 }
 ```

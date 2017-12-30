@@ -215,7 +215,7 @@ object Combination{
   * @param rank the highest rank among cards in a sequence, `5` for `5432A`.
   */
 case class StraightFlush(rank: Rank) extends Combination {
-	require(rank >= `5`, s"$rank-high straight flush does not exist")
+	require(rank >= 5, s"$rank-high straight flush does not exist")
 
 	/**
 	  * If this straight flush is a royal flush.
