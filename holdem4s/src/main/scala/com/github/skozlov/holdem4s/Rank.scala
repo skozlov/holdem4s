@@ -4,12 +4,17 @@ package com.github.skozlov.holdem4s
   * Card rank.
   * Ascending order of ranks: 2, 3, 4, 5, 6, 7, 8, 9, T, J, Q, K, A.
   * @param symbol `'2'`, `'3'`, etc.
-  * @param priority rank with higher priority is higher. Priorities of any two adjacent ranks differ by `1`.
+  * @param name English name of this rank ("Two", "Three", etc.)
   */
-sealed case class Rank private(symbol: Char, private val priority: Int) extends Ordered[Rank]{
+sealed case class Rank private(symbol: Char, name: String, private val priority: Int) extends Ordered[Rank]{
 	import Rank._
 
 	PriorityToRank(priority) = this
+
+	/**
+	  * Plural of `this.name` ("Twos", "Threes", etc.)
+	  */
+	val namePlural: String = name + 's'
 
 	override def compare(that: Rank): Int = this.priority compare that.priority
 
@@ -126,35 +131,37 @@ sealed case class Rank private(symbol: Char, private val priority: Int) extends 
 object Rank {
 	private val PriorityToRank: scala.collection.mutable.Map[Int, Rank] = scala.collection.mutable.HashMap()
 
-	val `2` = Rank('2', 2)
+	val `2` = Rank('2', "Two", 2)
 	val Two: Rank = `2`
 
-	val `3` = Rank('3', 3)
+	val `3` = Rank('3', "Three", 3)
 	val Three: Rank = `3`
 
-	val `4` = Rank('4', 4)
+	val `4` = Rank('4', "Four", 4)
 	val Four: Rank = `4`
 
-	val `5` = Rank('5', 5)
+	val `5` = Rank('5', "Five", 5)
 	val Five: Rank = `5`
 
-	val `6` = Rank('6', 6)
+	val `6` = new Rank('6', "Six", 6){
+		override val namePlural: String = "Sixes"
+	}
 	val Six: Rank = `6`
 
-	val `7` = Rank('7', 7)
+	val `7` = Rank('7', "Seven", 7)
 	val Seven: Rank = `7`
 
-	val `8` = Rank('8', 8)
+	val `8` = Rank('8', "Eight", 8)
 	val Eight: Rank = `8`
 
-	val `9` = Rank('9', 9)
+	val `9` = Rank('9', "Nine", 9)
 	val Nine: Rank = `9`
 
-	val T = Rank('T', 10)
-	val J = Rank('J', 11)
-	val Q = Rank('Q', 12)
-	val K = Rank('K', 13)
-	val A = Rank('A', 14)
+	val T = Rank('T', "Ten", 10)
+	val J = Rank('J', "Jack", 11)
+	val Q = Rank('Q', "Queen", 12)
+	val K = Rank('K', "King", 13)
+	val A = Rank('A', "Ace", 14)
 
 	val Ten: Rank = T
 	val Jack: Rank = J

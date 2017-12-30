@@ -4,6 +4,7 @@ import com.github.skozlov.holdem4s.Combination._
 import com.github.skozlov.holdem4s.Rank._
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 
 /**
   * Like [[com.github.skozlov.holdem4s.Hand]], but contains only data relevant for comparison of hands.
@@ -27,16 +28,17 @@ import scala.annotation.tailrec
   *     <li>Four kings and ace (KKKKA)</li>
   * </ul>
   */
-sealed trait Combination extends Ordered[Combination]{
-	/**
-	  * For internal usage only
-	  */
-	protected[holdem4s] def kindRank: Int
+sealed abstract class Combination(
+	                                 protected val kindRank: Int,
+	                                 protected val mainRanks: List[Rank],
+	                                 protected val kickerRanks: List[Rank] = Nil
+                                 ) extends Ordered[Combination]{
 
-	/**
-	  * For internal usage only
-	  */
-	protected[holdem4s] def ranksOrdered: List[Rank]
+	requireDecreasing(kickerRanks)
+
+	protected val ranksOrdered: List[Rank] = mainRanks ++ kickerRanks
+
+	requireDistinct(ranksOrdered)
 
 	/**
 	  * Compares this hand with `that`.
@@ -89,6 +91,14 @@ sealed trait Combination extends Ordered[Combination]{
 			compare(this.ranksOrdered, that.ranksOrdered)
 		}
 	}
+
+	protected def nameMainPart: String
+
+	override lazy val toString: String = nameMainPart + (if (kickerRanks.isEmpty) "" else {
+		" with " + (if (kickerRanks.size == 1) s"${kickerRanks.head.name} kicker" else {
+			s"${((kickerRanks take (kickerRanks.size - 1)) map {_.name}) mkString ", "} and ${kickerRanks.last.name} kickers"
+		})
+	})
 }
 
 object Combination{
@@ -167,6 +177,22 @@ object Combination{
 	}
 
 	/**
+	  * Throws [[IllegalArgumentException]] unless the given ranks are distinct.
+	  * @param ranks ranks to check
+	  */
+	def requireDistinct(ranks: Traversable[Rank]): Unit ={
+		val seen: mutable.Set[Rank] = new mutable.HashSet[Rank]()
+		val duplicates: mutable.Set[Rank] = new mutable.HashSet[Rank]()
+		for(rank <- ranks){
+			if (seen contains rank){
+				duplicates += rank
+			}
+			seen += rank
+		}
+		require(duplicates.isEmpty, s"Duplicated ranks: ${duplicates mkString ", "}")
+	}
+
+	/**
 	  * Tests whether the given set contains at least 5 suited cards
 	  * @param cards cards to search for suited ones
 	  * @return if the given set contains at least 5 suited cards, returns [[scala.Some]] containing all those cards, otherwise returns [[scala.None]]
@@ -214,25 +240,16 @@ object Combination{
   * Ace-high straight flush (`AKQJT`) is called a royal flush.
   * @param rank the highest rank among cards in a sequence, `5` for `5432A`.
   */
-case class StraightFlush(rank: Rank) extends Combination {
-	require(rank >= 5, s"$rank-high straight flush does not exist")
+case class StraightFlush(rank: Rank) extends Combination(kindRank = 8, mainRanks = List(rank)) {
+	require(rank >= 5, s"${rank.name}-high straight flush does not exist")
 
 	/**
 	  * If this straight flush is a royal flush.
 	  */
 	lazy val royal: Boolean = rank == A
 
-	override protected[holdem4s] final val kindRank = 8
 
-	override protected[holdem4s] final lazy val ranksOrdered = List(rank)
-
-	/**
-	  * Name of this straight flush.
-	  * @example
-	  * println(StraightFlush(`5`)) // 5-high straight flush
-	  * println(StraightFlush(A)) // Royal flush
-	  */
-	override lazy val toString: String = if(royal) "Royal flush" else s"$rank-high straight flush"
+	override protected lazy val nameMainPart: String = if(royal) "Royal flush" else s"${rank.name}-high straight flush"
 }
 
 object StraightFlush{
@@ -266,24 +283,11 @@ object RoyalFlush extends StraightFlush(A)
   * @param rank common rank of 4 cards
   * @param kickerRank rank of another card, if any
   */
-case class FourOfAKind(rank: Rank, kickerRank: Option[Rank] = None) extends Combination {
-	require(!(kickerRank contains rank), "Duplicated rank: " + kickerRank)
+case class FourOfAKind(rank: Rank, kickerRank: Option[Rank] = None)
+	extends Combination(kindRank = 7, mainRanks = List(rank), kickerRanks = kickerRank.toList) {
 
-	override protected[holdem4s] final val kindRank = 7
 
-	override protected[holdem4s] final lazy val ranksOrdered: List[Rank] = List(rank) ++ kickerRank.toList
-
-	/**
-	  * Name of this four of a kind.
-	  * @example
-	  * println(Four(A)) // Quad As
-	  * println(Four(A, K)) // Quad As with K kicker
-	  */
-	override lazy val toString: String = {
-		val mainPart = s"Quad ${rank}s"
-		val extraPart = kickerRank map {rank => s" with $rank kicker"} getOrElse ""
-		mainPart + extraPart
-	}
+	override protected lazy val nameMainPart: String = s"Quad ${rank.namePlural}"
 }
 
 object FourOfAKind{
@@ -320,18 +324,10 @@ object FourOfAKind{
   * @param threeRank common rank of 3 cards
   * @param pairRank common rank of 2 cards
   */
-case class FullHouse(threeRank: Rank, pairRank: Rank) extends Combination{
-	require(threeRank != pairRank, "Duplicated rank: " + threeRank)
+case class FullHouse(threeRank: Rank, pairRank: Rank)
+	extends Combination(kindRank = 6, mainRanks = List(threeRank, pairRank)){
 
-	override protected[holdem4s] final val kindRank = 6
-
-	override protected[holdem4s] final lazy val ranksOrdered = List(threeRank, pairRank)
-
-	/**
-	  * Name of this full house.
-	  * @example println(FullHouse(`5`, J)) // 5s full of Js
-	  */
-	override lazy val toString: String = s"${threeRank}s full of ${pairRank}s"
+	override protected lazy val nameMainPart: String = s"${threeRank.namePlural} full of ${pairRank.namePlural}"
 }
 
 object FullHouse{
@@ -363,19 +359,12 @@ object FullHouse{
   * @param rank4 4th rank
   * @param rank5 lowest rank
   */
-case class Flush(rank1: Rank, rank2: Rank, rank3: Rank, rank4: Rank, rank5: Rank) extends Combination{
-	override protected[holdem4s] final val kindRank = 5
+case class Flush(rank1: Rank, rank2: Rank, rank3: Rank, rank4: Rank, rank5: Rank)
+	extends Combination(kindRank = 5, mainRanks = List(rank1, rank2, rank3, rank4, rank5)){
 
-	override final val ranksOrdered: List[Rank] = List(rank1, rank2, rank3, rank4, rank5)
+	require(straightLike(mainRanks.toSet).isEmpty, "This is a straight flush")
 
-	requireDecreasing(ranksOrdered)
-	require(straightLike(ranksOrdered.toSet).isEmpty, "This is a straight flush")
-
-	/**
-	  * Name of this flush.
-	  * @example println(Flush(List(A, K, Q, J, `9`))) // Flush (A K Q J 9)
-	  */
-	override lazy val toString: String = s"Flush (${ranksOrdered.mkString(" ")})"
+	override protected lazy val nameMainPart: String = s"Flush (${mainRanks mkString " "})"
 }
 
 object Flush{
@@ -405,19 +394,10 @@ object Flush{
   * Straight: a hand consisting of 5 cards in a sequence (or `5`, `4`, `3`, `2` and `A`), but not in the same suit.
   * @param rank the highest rank among cards in a sequence, `5` for `5432A`.
   */
-case class Straight(rank: Rank) extends Combination{
-	require(rank >= `5`, s"$rank-high straight does not exist")
+case class Straight(rank: Rank) extends Combination(kindRank = 4, mainRanks = List(rank)){
+	require(rank >= `5`, s"${rank.name}-high straight does not exist")
 
-	override protected[holdem4s] final val kindRank = 4
-
-	override protected[holdem4s] final lazy val ranksOrdered = List(rank)
-
-	/**
-	  * Name of this straight.
-	  * @example
-	  * println(Straight(A)) // A-high straight
-	  */
-	override lazy val toString: String = s"$rank-high straight"
+	override protected lazy val nameMainPart: String = s"${rank.name}-high straight"
 }
 
 object Straight{
@@ -446,31 +426,12 @@ object Straight{
   * @param rank common rank of 3 cards
   * @param kickerRanks ranks of kickers (in descending order)
   */
-case class ThreeOfAKind(rank: Rank, kickerRanks: List[Rank]) extends Combination{
+case class ThreeOfAKind(rank: Rank, override val kickerRanks: List[Rank])
+	extends Combination(kindRank = 3, mainRanks = List(rank), kickerRanks = kickerRanks){
+
 	require(kickerRanks.size <= 2, s"A three of a kind cannot contain more than 2 kickers, but found ${kickerRanks.size}")
-	require(!(kickerRanks contains rank), "Duplicated rank: " + rank)
-	requireDecreasing(kickerRanks)
 
-	override protected[holdem4s] final val kindRank = 3
-
-	override protected[holdem4s] final lazy val ranksOrdered: List[Rank] = rank :: kickerRanks
-
-	/**
-	  * Name of this three of a kind.
-	  * @example
-	  * println(Three(A)) // Three As
-	  * println(Three(A, K)) // Three As with K kicker
-	  * println(Three(A, K, Q)) // // Three As with K and Q kickers
-	  */
-	override lazy val toString: String = {
-		val mainPart = s"Three ${rank}s"
-		val extraPart = kickerRanks match {
-			case Nil => ""
-			case List(kickerRank) => s" with $kickerRank kicker"
-			case List(kicker1, kicker2) => s" with $kicker1 and $kicker2 kickers"
-		}
-		mainPart + extraPart
-	}
+	override protected lazy val nameMainPart: String = s"Three ${rank.namePlural}"
 }
 
 object ThreeOfAKind{
@@ -510,25 +471,12 @@ object ThreeOfAKind{
   * @param lowPairRank rank of lower pair
   * @param kickerRank rank of kicker, if any
   */
-case class TwoPair(highPairRank: Rank, lowPairRank: Rank, kickerRank: Option[Rank] = None) extends Combination{
-	private val pairRanks = List(highPairRank, lowPairRank)
-	require((pairRanks intersect kickerRank.toList).isEmpty, "Duplicated rank: " + kickerRank.get)
-	requireDecreasing(pairRanks)
+case class TwoPair(highPairRank: Rank, lowPairRank: Rank, kickerRank: Option[Rank] = None)
+	extends Combination(kindRank = 2, mainRanks = List(highPairRank, lowPairRank), kickerRanks = kickerRank.toList){
 
-	override protected[holdem4s] final val kindRank = 2
+	requireDecreasing(List(highPairRank, lowPairRank))
 
-	override protected[holdem4s] final lazy val ranksOrdered: List[Rank] = pairRanks ++ kickerRank.toList
-
-	/**
-	  * Name of this two pair.
-	  * @example println(TwoPair(A, K)) // As and Ks
-	  * @example println(TwoPair(A, K, Q)) // As and Ks with Q kicker
-	  */
-	override lazy val toString: String = {
-		val mainPart = s"${highPairRank}s and ${lowPairRank}s"
-		val extraPart = kickerRank map {rank => s" with $rank kicker"} getOrElse ""
-		mainPart + extraPart
-	}
+	override protected lazy val nameMainPart: String = s"${highPairRank.namePlural} and ${lowPairRank.namePlural}"
 }
 
 object TwoPair{
@@ -568,30 +516,12 @@ object TwoPair{
   * @param rank common rank of 2 cards
   * @param kickerRanks ranks of other cards, in descending order, up to 3
   */
-case class Pair(rank: Rank, kickerRanks: List[Rank]) extends Combination{
+case class Pair(rank: Rank, override val kickerRanks: List[Rank])
+	extends Combination(kindRank = 1, mainRanks = List(rank), kickerRanks = kickerRanks){
+
 	require(kickerRanks.size <= 3, s"A pair cannot contain more than 3 kickers, but found ${kickerRanks.size}")
-	require(!(kickerRanks contains rank), "Duplicated rank: " + rank)
-	requireDecreasing(kickerRanks)
 
-	override protected[holdem4s] final val kindRank = 1
-
-	override protected[holdem4s] final lazy val ranksOrdered: List[Rank] = rank :: kickerRanks
-
-	/**
-	  * Name of this pair.
-	  * @example println(Pair(A)) // A pair of As
-	  * @example println(Pair(A, K)) // A pair of As with K kicker
-	  * @example println(Pair(A, K, Q)) // A pair of As with K and Q kickers
-	  */
-	override lazy val toString: String = {
-		val mainPart = s"A pair of ${rank}s"
-		val extraPart = kickerRanks match {
-			case Nil => ""
-			case List(kickerRank) => s" with $kickerRank kicker"
-			case _ => s" with ${kickerRanks mkString " and "} kickers"
-		}
-		mainPart + extraPart
-	}
+	override protected lazy val nameMainPart: String = s"A pair of ${rank.namePlural}"
 }
 
 object Pair{
@@ -632,32 +562,15 @@ object Pair{
   * </ul>
   * @param ranks ranks of cards, in decreasing order, 1 to 5 (inclusive)
   */
-case class HighCard(ranks: List[Rank]) extends Combination{
+case class HighCard(ranks: List[Rank])
+	extends Combination(kindRank = 0, mainRanks = ranks take 1, kickerRanks = ranks drop 1){
+
 	require(
 		(1 to 5) contains ranks.size,
 		"A combination must contain at least 1 and at most 5 cards, but found" + ranks.size)
-	requireDecreasing(ranks)
 	require(straightLike(ranks.toSet).isEmpty, ranks.mkString(" ") + " is a straight")
 
-	override protected[holdem4s] final val kindRank = 0
-
-	override protected[holdem4s] final lazy val ranksOrdered: List[Rank] = ranks
-
-	/**
-	  * Name of this high card
-	  * @example HighCard(A) // A-high
-	  * @example HighCard(A, K) // A-high with K kicker
-	  * @example HighCard(A, K, Q) // A-high with K and Q kickers
-	  */
-	override lazy val toString: String = {
-		val mainPart = s"${ranks.head}-high"
-		val kickerPart = ranks.tail match {
-			case Nil => ""
-			case List(kicker) => s" with $kicker kicker"
-			case kickers => s" with ${kickers mkString " and "} kickers"
-		}
-		mainPart + kickerPart
-	}
+	override protected lazy val nameMainPart: String = s"${ranks.head.name}-high"
 }
 
 object HighCard{

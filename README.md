@@ -11,7 +11,7 @@ import Rank._
 
 Hand(2♠, 2♥, A♠, K♠, Q♠, J♥, 9♥) match {
 	case Pair(`2`, highestKicker :: _) =>
-		println(s"A pair of 2s with $highestKicker kicker and so on") //A pair of 2s with A kicker and so on
+		println(s"A pair of Twos with ${highestKicker.name} kicker and so on") //A pair of Twos with Ace kicker and so on
 }
 ```
 
@@ -135,7 +135,7 @@ because the rank of a hand is determined by the highest 5-card _combination_ it 
 
 ```scala
 val combination: Combination = Hand(A ♠, A ♥, A ♦, A ♣, K ♠, K ♥, K ♦).toCombination
-println(combination) //Quad As with K kicker
+println(combination) //Quad Aces with King kicker
 println(Hand(A♥, K♥, Q♥, J♥, T♥).toCombination) //Royal flush
 ```
 
@@ -177,6 +177,6 @@ Finally, pattern matching:
 ```scala
 Hand(2♠, 2♥, A♠, K♠, Q♠, J♥, 9♥) match {
 	case Pair(`2`, highestKicker :: _) =>
-		require(s"A pair of 2s with $highestKicker kicker and so on" == "A pair of 2s with A kicker and so on")
+		println(s"A pair of Twos with ${highestKicker.name} kicker and so on") //A pair of Twos with Ace kicker and so on
 }
 ```

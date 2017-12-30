@@ -47,12 +47,14 @@ class RankTest{
 	def testNumberToRank(): Unit ={
 		assertEquals((2 to 9).toList map numberToRank, `2` to `9`)
 		try {
+			//noinspection ScalaUnusedSymbol
 			val rank: Rank = 1
 			fail("No exception was thrown")
 		} catch {
 			case e: IllegalArgumentException => assertEquals("requirement failed: Invalid rank: 1", e.getMessage)
 		}
 		try {
+			//noinspection ScalaUnusedSymbol
 			val rank: Rank = 10
 			fail("No exception was thrown")
 		} catch {

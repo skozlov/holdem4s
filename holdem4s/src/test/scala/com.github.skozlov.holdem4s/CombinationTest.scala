@@ -96,4 +96,33 @@ class CombinationTest{
 		compare(HighCard(A, K), A♠, K♠)
 		compare(HighCard(A), A♠)
 	}
+
+	@Test
+	def testToString(): Unit ={
+		def compare(actual: Combination, expected: String) ={
+			assertEquals(expected, actual.toString)
+		}
+
+		compare(RoyalFlush, "Royal flush")
+		compare(StraightFlush(K), "King-high straight flush")
+		compare(FourOfAKind(A), "Quad Aces")
+		compare(FourOfAKind(A, K), "Quad Aces with King kicker")
+		compare(FullHouse(A, K), "Aces full of Kings")
+		compare(Flush(A, K, Q, J, 9), "Flush (A K Q J 9)")
+		compare(Straight(A), "Ace-high straight")
+		compare(ThreeOfAKind(A), "Three Aces")
+		compare(ThreeOfAKind(A, K), "Three Aces with King kicker")
+		compare(ThreeOfAKind(A, K, Q), "Three Aces with King and Queen kickers")
+		compare(TwoPair(A, K), "Aces and Kings")
+		compare(TwoPair(A, K, Q), "Aces and Kings with Queen kicker")
+		compare(Pair(A), "A pair of Aces")
+		compare(Pair(A, K), "A pair of Aces with King kicker")
+		compare(Pair(A, K, Q), "A pair of Aces with King and Queen kickers")
+		compare(Pair(A, K, Q, J), "A pair of Aces with King, Queen and Jack kickers")
+		compare(HighCard(A), "Ace-high")
+		compare(HighCard(A, K), "Ace-high with King kicker")
+		compare(HighCard(A, K, Q), "Ace-high with King and Queen kickers")
+		compare(HighCard(A, K, Q, J), "Ace-high with King, Queen and Jack kickers")
+		compare(HighCard(A, K, Q, J, 9), "Ace-high with King, Queen, Jack and Nine kickers")
+	}
 }

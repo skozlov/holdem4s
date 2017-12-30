@@ -35,7 +35,7 @@ object Demo extends App{
 
 	require(Hand(A♠, A♥, A♦, A♣, K♠, K♥, K♦) < Hand(A♥, K♥, Q♥, J♥, T♥))
 	val combination: Combination = Hand(A ♠, A ♥, A ♦, A ♣, K ♠, K ♥, K ♦).toCombination
-	require(combination.toString == "Quad As with K kicker")
+	require(combination.toString == "Quad Aces with King kicker")
 	require(Hand(A♥, K♥, Q♥, J♥, T♥).toCombination.toString == "Royal flush")
 
 	require(Hand(A♠, A♥, A♦, K♣, Q♠, J♥) > Hand(A♠, A♥, A♦, K♣))
@@ -49,6 +49,6 @@ object Demo extends App{
 
 	Hand(2♠, 2♥, A♠, K♠, Q♠, J♥, 9♥) match {
 		case Pair(`2`, highestKicker :: _) =>
-			require(s"A pair of 2s with $highestKicker kicker and so on" == "A pair of 2s with A kicker and so on")
+			require(s"A pair of Twos with ${highestKicker.name} kicker and so on" == "A pair of Twos with Ace kicker and so on")
 	}
 }
